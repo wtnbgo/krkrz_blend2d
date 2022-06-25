@@ -1,0 +1,42 @@
+/**
+ * Blend2D 描画コンテキスト
+ */
+class Blend2D {
+
+    function Blend2D();
+
+    property target; //< 描画中の対象
+    property width;  //< 描画領域横幅
+    property height; //< 描画領域縦幅
+
+    /**
+     * 描画処理の呼び出し
+     * @param target Layer or Bitmap or Texture
+     * @parma function 描画処理関数。第一引数に描画可能状態になったこのコンテキスト自身がわたされる
+     *    function(context)
+     */
+    function draw(target, func=function(ctx:Blend2D){});
+
+
+    //-----------------------------------------------------------
+    // matrix
+    //-----------------------------------------------------------
+
+
+
+    //-----------------------------------------------------------
+    // stroke
+    //-----------------------------------------------------------
+
+    // 低層描画命令
+
+    // 低層描画指定命令
+
+    /**
+    * パスの描画
+    * @param path パス GdiPlus.Path を指定します
+    * @return 更新領域情報の辞書 left, top, width, height
+    */
+    function drawPath(path);
+
+ }
