@@ -1,3 +1,7 @@
 .vscode
+.vs
 build
+krkr_new.exe
+savedata
 data
+*.pdb

@@ -1,0 +1,70 @@
+var dm = Debug.message;
+dm("startup test");
+
+var dllpath = System.exePath + "build/x86-windows-static/Release/";
+Storages.addAutoPath(dllpath);
+Plugins.link("krkrblend2d.dll");
+
+dm("test program");
+
+Storages.addAutoPath("font/");
+Blend2D.addFont("Roboto-Regular.otf");
+Blend2D.addFont("sourcehansansjp-regular.otf");
+
+class MyWindow extends Window
+{
+    var base;
+
+    function MyWindow(w, h) {
+        super.Window(...);
+        setInnerSize(w, h);
+
+        base = new Layer(this, null);
+        base.setSize(w, h);
+        base.fillRect(0,0,w,h,0);
+        add(base);
+
+        System.addContinuousHandler(onContinuous);
+    }
+
+    function finalize() {
+        System.removeContinuousHandler(onContinuous);
+    }
+
+    function onDraw(context) {
+    }
+
+    var frameCount;
+    var prevTick;
+    var fps;    
+
+    function calcFPS() {
+        frameCount++;
+        var tick = System.getTickCount();
+        if (prevTick === void) prevTick = tick;
+        var time = tick - prevTick;
+        if (time >= 1000) {
+            fps = frameCount * 1000 / time;
+            frameCount = 0;
+            prevTick = tick;
+            this.caption = @"fps:${fps}";
+        }
+    }
+
+    var ptick;
+
+    function onContinuous() {
+        calcFPS();
+
+        var tick = System.getTickCount();
+        if (ptick === void) ptick = tick;
+        var diff = tick - ptick;
+
+        Blend2D.drawToLayer(base, this.onDraw);
+
+        ptick = tick;
+    }
+};
+
+var win = new MyWindow(1280,720);
+win.visible = true;
