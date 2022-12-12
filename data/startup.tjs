@@ -1,8 +1,12 @@
 var dm = Debug.message;
 dm("startup test");
 
-var dllpath = System.exePath + "build/x86-windows-static/Release/";
+var dllpath = System.exePath + "build/x86-windows-static/Debug/";
 Storages.addAutoPath(dllpath);
+dllpath = System.exePath + "../nuklear/build/x86-windows-static/Release/";
+Storages.addAutoPath(dllpath);
+
+Plugins.link("krkrnuklear.dll");
 Plugins.link("krkrblend2d.dll");
 
 dm("test program");
@@ -14,6 +18,7 @@ Blend2D.addFont("sourcehansansjp-regular.otf");
 class MyWindow extends Window
 {
     var base;
+    var nk;
 
     function MyWindow(w, h) {
         super.Window(...);
@@ -24,6 +29,12 @@ class MyWindow extends Window
         base.fillRect(0,0,w,h,0);
         add(base);
 
+        var font = new BLFont();
+        font.load("Robota", 20);
+        nk = new NK(font);
+        nk.style_theme(NK.THEME_WHITE);
+        add(nk);
+
         System.addContinuousHandler(onContinuous);
     }
 
@@ -31,7 +42,53 @@ class MyWindow extends Window
         System.removeContinuousHandler(onContinuous);
     }
 
+    var op;
+    var EASY = 0;
+    var HARD = 1;
+    var value;
+    var check;
+    var selected = [];
+
+    function onGUI(context) {
+        nk.input_end();
+        if (nk.begin("Demo", [300,300,400,400], NK.WINDOW_BORDER|NK.WINDOW_MOVABLE|NK.WINDOW_CLOSABLE)) {
+
+            nk.layout_row_static(30, 100, 1);
+            if (nk.button_label("button1")) {
+                dm("push botton1");
+            }
+
+            nk.layout_row_dynamic(30, 2);
+            if (nk.option_label("easy", op == EASY)) op = EASY;
+            if (nk.option_label("hard", op == HARD)) op = HARD;
+
+            nk.layout_row_begin(NK.DYNAMIC, 30, 2);
+            nk.layout_row_push(0.3);
+            nk.label("Volume:", NK.TEXT_LEFT);
+            nk.layout_row_push(0.7);
+            value = nk.slide_float(0, value, 1.0, 0.1);
+            nk.layout_row_end();
+
+            nk.layout_row_dynamic(30, 2);
+            check = nk.check_label("check", check);
+
+            nk.layout_row_dynamic(150, 1);
+            if (nk.group_begin("List", 0)) {
+                nk.layout_row_static(30, 100, 3);
+                for (var i = 0; i < 5; ++i) {
+                    selected[i] = nk.select_label(@"Select:${i}", NK.TEXT_CENTERED, selected[i]);
+                }
+            } 
+            nk.group_end();
+
+        }
+        nk.end();
+        nk.render(context);
+        nk.input_begin();
+    }
+
     function onDraw(context) {
+        onGUI(context);        
     }
 
     var frameCount;
@@ -64,6 +121,28 @@ class MyWindow extends Window
 
         ptick = tick;
     }
+
+    function onMouseMove(x, y) {
+        if (nk) {
+            //dm(@"onMouseMove:${x},${y}");
+            nk.input_motion(x, y);
+        }
+    }
+    
+    function onMouseDown(x, y, button) {
+        if (nk) {
+            //dm(@"onMouseDown:${x},${y}:${button}");
+            nk.input_button(button, x, y, true);
+        }
+    }
+
+    function onMouseUp(x, y, button) {
+        if (nk) {
+            //dm(@"onMouseUp:${x},${y}:${button}");
+            nk.input_button(button, x, y, false);
+        }
+    }
+
 };
 
 var win = new MyWindow(1280,720);

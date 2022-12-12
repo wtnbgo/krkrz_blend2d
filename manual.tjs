@@ -12,13 +12,13 @@ class Blend2D {
      */
     function drawToLayer(layer, func=function(ctx:BLContext){});
 
-
     /**
      * static
      * フォント追加
      * @param file フォントファイル
      */
     function addFont(file);
+
 };
 
 class BLPoint
@@ -35,6 +35,16 @@ class BLMatrix2D
 
 class BLContext
 {
+    function setCompOP();
+    function clearAll();
+
+    function setStrokeStyle(color);
+    function setStrokeJoin(join);
+    function setStrokeCaps(join);
+    function setStrokeWidth(join);
+    function strokePath(path);
+
+    function renderMK(nkcontext);
 };
 
 

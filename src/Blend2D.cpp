@@ -57,25 +57,18 @@ void Blend2D::drawToLayer(tTJSVariant layer, tTJSVariant callback) {
   int pitch = p.getIntValue(TJS_W("mainImageBufferPitch"));
   void *buf = (void *)p.getIntValue(TJS_W("mainImageBufferForWrite"));
 
-  bool bottomUp = false;
-  if (pitch < 0) {
-    bottomUp = true;
-    buf = (unsigned char *)buf + pitch * (height - 1);
-    pitch = -pitch;
-  }
-
   BLImage img;
   img.createFromData(width, height, BL_FORMAT_PRGB32, buf, pitch);
   BLContext ctx(img);
   ctx.setCompOp(BL_COMP_OP_SRC_COPY);
+  ctx.clearAll();
 
   if (callback.Type() == tvtObject) {
     tTJSVariant canvasObj = toVariant(&ctx);
     tTJSVariant widthObj = width;
     tTJSVariant heightObj = height;
-    tTJSVariant bottomUpObj = bottomUp;
-    tTJSVariant *vars[] = {&canvasObj, &widthObj, &heightObj, &bottomUpObj};
-    callback.AsObjectClosureNoAddRef().FuncCall(0, 0, 0, NULL, 4, vars, 0);
+    tTJSVariant *vars[] = {&canvasObj, &widthObj, &heightObj};
+    callback.AsObjectClosureNoAddRef().FuncCall(0, 0, 0, NULL, 3, vars, 0);
 
     // レイヤ更新 帰り値で処理が妥当か？
     p.FuncCall(0, TJS_W("update"), &updateHint, NULL, 0, 0, width, height);

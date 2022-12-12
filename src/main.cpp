@@ -271,13 +271,70 @@ NCB_REGISTER_CLASS(Blend2D)
 	NCB_METHOD(addFont);
 }
 
-NCB_REGISTER_CLASS(BLFont)
+bool font_load(BLFont *font, const char *family, float size) 
 {
+	return Blend2D::loadFont(family, size, *font);
 }
 
+tjs_uintptr_t nk_font_userdata(BLFont *font) {
+	return (tjs_uintptr_t)font;
+};
+
+extern float nk_text_width(BLFont *font, float h, const char *text, int len);
+
+tjs_uintptr_t nk_font_width_func(BLFont *font) 
+{
+	return (tjs_uintptr_t)(void*)&nk_text_width;
+}
+
+float nk_font_size(BLFont *font)
+{
+	return font->size();
+}
+
+NCB_REGISTER_CLASS(BLFont)
+{
+	NCB_CONSTRUCTOR(());
+	NCB_METHOD_PROXY(load, font_load);
+
+	// nuklear 用プロパティ
+	Property(TJS_W("nk_userdata"), &nk_font_userdata, (int)0, Proxy);
+	Property(TJS_W("nk_font_height"), &nk_font_size, (int)0, Proxy);
+	Property(TJS_W("nk_font_width_func"), &nk_font_width_func, (int)0, Proxy);
+}
+
+tjs_uintptr_t nk_image_userdata(BLImage *image) {
+	return (tjs_uintptr_t)image;
+};
+
+NCB_REGISTER_CLASS(BLImage)
+{
+	NCB_CONSTRUCTOR(());
+
+	// nuklear 用プロパティ
+	Property(TJS_W("nk_userdata"), &nk_image_userdata, (int)0, Proxy);
+//	Property(TJS_W("nk_image_width"), &BLImage::width, (int)0);
+//	Property(TJS_W("nk_image_height"), &BLImage::height, (int)0);
+}
+
+tjs_uintptr_t nk_context_userdata(BLContext *ctx) {
+	return (tjs_uintptr_t)ctx;
+};
+
+extern void nk_render(BLContext *ctx, const struct nk_command *cmd);
+
+tjs_uintptr_t nk_render_func(BLContext *ctx) 
+{
+    return (tjs_uintptr_t)(void*)&nk_render;
+};
 
 NCB_REGISTER_CLASS(BLContext)
 {
+	NCB_CONSTRUCTOR(());
+
+	// nuklear 用プロパティ
+	Property(TJS_W("nk_userdata"), &nk_context_userdata, (int)0, Proxy);
+	Property(TJS_W("nk_render_func"), &nk_render_func, (int)0, Proxy);
 }
 
 tTJSVariant toVariant(BLContext *obj, bool sticky)

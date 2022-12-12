@@ -21,6 +21,7 @@ add_subdirectory(blend2d ${CMAKE_CURRENT_BINARY_DIR}/blend2d)
 add_library(${PROJECT_NAME} SHARED
   src/Blend2D.cpp
   src/main.cpp
+  src/nuklear.cpp
 )
 
 set_property(TARGET ${PROJECT_NAME} ncbind tp_stub blend2d PROPERTY
@@ -28,6 +29,7 @@ set_property(TARGET ${PROJECT_NAME} ncbind tp_stub blend2d PROPERTY
 
 target_include_directories(${PROJECT_NAME}
 PUBLIC
+  ../nuklear/src
 )  
 
 target_link_libraries(${PROJECT_NAME} 
