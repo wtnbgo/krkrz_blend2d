@@ -271,9 +271,31 @@ NCB_REGISTER_CLASS(Blend2D)
 	NCB_METHOD(addFont);
 }
 
+bool face_load(BLFontFace *face, const char *family) 
+{
+	return Blend2D::loadFace(family, *face);
+}
+
+bool face_loadfile(BLFontFace *face, const tjs_char *file) 
+{
+	return Blend2D::loadFaceFile(file, *face);
+}
+
+NCB_REGISTER_CLASS(BLFontFace)
+{
+	NCB_CONSTRUCTOR(());
+	NCB_METHOD_PROXY(load, face_load);
+	NCB_METHOD_PROXY(loadFile, face_loadfile);
+}
+
 bool font_load(BLFont *font, const char *family, float size) 
 {
 	return Blend2D::loadFont(family, size, *font);
+}
+
+bool font_loadFace(BLFont *font, BLFontFace *face, float size) 
+{
+	return font->createFromFace(*face, size) == 0;
 }
 
 tjs_uintptr_t nk_font_userdata(BLFont *font) {
@@ -296,6 +318,7 @@ NCB_REGISTER_CLASS(BLFont)
 {
 	NCB_CONSTRUCTOR(());
 	NCB_METHOD_PROXY(load, font_load);
+	NCB_METHOD_PROXY(loadFace, font_loadFace);
 
 	// nuklear 用プロパティ
 	Property(TJS_W("nk_userdata"), &nk_font_userdata, (int)0, Proxy);

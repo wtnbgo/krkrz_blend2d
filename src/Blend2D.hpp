@@ -11,6 +11,10 @@ struct Blend2D {
    */
   static void addFont(const tjs_char *file);
 
+  static bool loadFace(const char *family, BLFontFace &fontFace);
+
+  static bool loadFaceFile(const tjs_char *file, BLFontFace &fontFace);
+
   /**
    * @brief フォントオブジェクトを取得
    * 

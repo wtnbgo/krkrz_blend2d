@@ -13,10 +13,12 @@ float nk_text_width(BLFont *font, float h, const char *text, int len)
         buf.setUtf8Text(text, len);
         BLTextMetrics metrics;
         if (h == font->size()) {
+            font->shape(buf);
             font->getTextMetrics(buf, metrics);
         } else {
             BLFont f;
             f.createFromFace(font->face(), h);
+            f.shape(buf);
             f.getTextMetrics(buf, metrics);
         }
         return metrics.advance.x;

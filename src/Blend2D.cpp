@@ -1,18 +1,62 @@
 #define NOMINMAX
 #include <windows.h>
 #define NCBIND_UTF8
-#include <memory>
 #include <ncbind.hpp>
+
+#include <memory>
 
 #include "Blend2D.hpp"
 
 std::unique_ptr<uint8_t[]> openKrKrFile(const tjs_char *filename,
                                         size_t *size_out);
 // blend2dフォントマネージャ
-static BLFontManager fontManager;
+static BLFontManager *fontManager = nullptr;
+
+static BLFontManager *getFontManager() {
+  if (!fontManager) {
+    fontManager = new BLFontManager();
+  }
+  return fontManager;
+};
+
+void deleteFunc(void* impl, void* externalData, void* userData) BL_NOEXCEPT 
+{
+  delete[] externalData;
+};
 
 // フォントデータを登録
 void Blend2D::addFont(const tjs_char *file) 
+{
+  ttstr filename = TVPGetPlacedPath(file);
+  if (filename.length()) {
+    size_t size;
+    auto data = openKrKrFile(filename.c_str(), &size);
+    if (data) {
+      BLFontData fontData;
+      void *ptr = data.release();
+      fontData.createFromData(ptr, size, deleteFunc);
+      for (int i = 0; i < fontData.faceCount(); i++) {
+        BLFontFace fontFace;
+        fontFace.createFromData(fontData, i);
+        const char *name = fontFace.familyName().data();
+        getFontManager()->addFace(fontFace);
+      }
+    }
+  }
+}
+
+bool Blend2D::loadFace(const char *family, BLFontFace &fontFace)
+{
+  BLArray<BLFontFace> fontFaces;
+  getFontManager()->queryFacesByFamilyName(family, fontFaces);
+  if (fontFaces.size() > 0) {
+    fontFace = fontFaces[0];
+    return true;
+  }
+  return false;
+}
+
+bool Blend2D::loadFaceFile(const tjs_char *file, BLFontFace &fontFace)
 {
   ttstr filename = TVPGetPlacedPath(file);
   if (filename.length()) {
@@ -23,20 +67,20 @@ void Blend2D::addFont(const tjs_char *file)
       dat.assignExternalData(data.get(), size, size, BL_DATA_ACCESS_READ);
       BLFontData fontData;
       fontData.createFromData(dat);
-      for (int i = 0; i < fontData.faceCount(); i++) {
-        BLFontFace fontFace;
-        fontFace.createFromData(fontData, i);
-        fontManager.addFace(fontFace);
+      if (fontData.faceCount() > 0) {
+        fontFace.createFromData(fontData, 0);
+        return true;
       }
     }
   }
+  return false;
 }
 
 // フォントデータをファミリー名指定して読み込み
 bool Blend2D::loadFont(const char *family, float size, BLFont &font)
 {
   BLArray<BLFontFace> fontFaces;
-  fontManager.queryFacesByFamilyName(family, fontFaces);
+  getFontManager()->queryFacesByFamilyName(family, fontFaces);
   if (fontFaces.size() > 0) {
     font.createFromFace(fontFaces[0], size);
     return true;

@@ -30,7 +30,7 @@ class MyWindow extends Window
         add(base);
 
         var font = new BLFont();
-        font.load("Robota", 20);
+        font.load("Roboto", 25);
         nk = new NK(font);
         nk.style_theme(NK.THEME_WHITE);
         add(nk);
