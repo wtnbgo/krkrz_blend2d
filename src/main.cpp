@@ -120,6 +120,49 @@ bool IsArray(const tTJSVariant &var)
 // ------------------------------------------------------
 
 
+// ------------------------------------------------------- BLRgba32
+
+template <class T>
+struct BLRgba32Convertor {
+	typedef ncbInstanceAdaptor<T> AdaptorT;
+	template <typename ANYT>
+	void operator ()(ANYT &adst, const tTJSVariant &src) {
+		if (src.Type() == tvtObject) {
+			T *obj = AdaptorT::GetNativeInstance(src.AsObjectNoAddRef());
+			if (obj) {
+				dst = *obj;
+			} else {
+				ncbPropAccessor info(src);
+				if (src.Type() == tvtInteger) {
+					dst = BLRgb32((tjs_int32)src);
+				} else if (IsArray(src)) {
+					dst = BLRgb32(info.getIntValue(1),
+							      info.getIntValue(2)								  
+							      info.getIntValue(3)
+							      info.getIntValue(0)
+								  );
+				} else {
+					dst = BLRgb32(info.getIntValue(L"r"),
+									info.getIntValue(L"g"),
+									info.getIntValue(L"b"),
+									info.getIntValue(L"a"));
+				}
+			}
+		} else {
+			dst = T();
+		}
+		adst = ncbTypeConvertor::ToTarget<ANYT>::Get(&dst);
+	}
+private:
+	T dst;
+};
+
+NCB_SET_CONVERTOR_DST(BLRgba32, BLRgba32Convertor);
+NCB_REGISTER_CLASS_DELAY(BLRgba32, BLRgba32) {
+	NCB_CONSTRUCTOR((int32_t));
+};
+
+
 // ------------------------------------------------------- BLPoint
 template <class T>
 struct BLPointConvertor {
@@ -193,6 +236,95 @@ NCB_REGISTER_CLASS_DELAY(BLSize, BLSize) {
 	NCB_MEMBER_PROPERTY_N(w, double);
 	NCB_MEMBER_PROPERTY_N(h, double);
 	NCB_METHOD_DETAIL(reset, Class, void, Class::reset, (double,double));
+//	NCB_METHOD(equals);
+};
+
+// ------------------------------------------------------- BLRect
+template <class T>
+struct BLRectConvertor {
+	typedef ncbInstanceAdaptor<T> AdaptorT;
+	template <typename ANYT>
+	void operator ()(ANYT &adst, const tTJSVariant &src) {
+		if (src.Type() == tvtObject) {
+			T *obj = AdaptorT::GetNativeInstance(src.AsObjectNoAddRef());
+			if (obj) {
+				dst = *obj;
+			} else {
+				ncbPropAccessor info(src);
+				if (IsArray(src)) {
+					dst = BLRect((double)info.getRealValue(0),
+								 	(double)info.getRealValue(1),
+								 	(double)info.getRealValue(2),
+								 	(double)info.getRealValue(3));
+				} else {
+					dst = BLRect((double)info.getRealValue(L"x"),
+									 (double)info.getRealValue(L"y"),
+									 (double)info.getRealValue(L"w"),
+									 (double)info.getRealValue(L"h"));
+				}
+			}
+		} else {
+			dst = T();
+		}
+		adst = ncbTypeConvertor::ToTarget<ANYT>::Get(&dst);
+	}
+private:
+	T dst;
+};
+
+NCB_SET_CONVERTOR_DST(BLRect, BLRectConvertor);
+NCB_REGISTER_CLASS_DELAY(BLRect, BLRect) {
+	NCB_CONSTRUCTOR((double,double,double,double));
+	NCB_MEMBER_PROPERTY_N(x, double);
+	NCB_MEMBER_PROPERTY_N(y, double);
+	NCB_MEMBER_PROPERTY_N(w, double);
+	NCB_MEMBER_PROPERTY_N(h, double);
+	NCB_METHOD_DETAIL(reset, Class, void, Class::reset, (double,double,double,double));
+//	NCB_METHOD(equals);
+};
+
+
+// ------------------------------------------------------- BLBox
+template <class T>
+struct BLBoxConvertor {
+	typedef ncbInstanceAdaptor<T> AdaptorT;
+	template <typename ANYT>
+	void operator ()(ANYT &adst, const tTJSVariant &src) {
+		if (src.Type() == tvtObject) {
+			T *obj = AdaptorT::GetNativeInstance(src.AsObjectNoAddRef());
+			if (obj) {
+				dst = *obj;
+			} else {
+				ncbPropAccessor info(src);
+				if (IsArray(src)) {
+					dst = BLBox((double)info.getRealValue(0),
+								 	(double)info.getRealValue(1),
+								 	(double)info.getRealValue(2),
+								 	(double)info.getRealValue(3));
+				} else {
+					dst = BLBox((double)info.getRealValue(L"x0"),
+									 (double)info.getRealValue(L"y0"),
+									 (double)info.getRealValue(L"x1"),
+									 (double)info.getRealValue(L"y1"));
+				}
+			}
+		} else {
+			dst = T();
+		}
+		adst = ncbTypeConvertor::ToTarget<ANYT>::Get(&dst);
+	}
+private:
+	T dst;
+};
+
+NCB_SET_CONVERTOR_DST(BLBox, BLBoxConvertor);
+NCB_REGISTER_CLASS_DELAY(BLBox, BLBox) {
+	NCB_CONSTRUCTOR((double,double,double,double));
+	NCB_MEMBER_PROPERTY_N(x0, double);
+	NCB_MEMBER_PROPERTY_N(y0, double);
+	NCB_MEMBER_PROPERTY_N(x1, double);
+	NCB_MEMBER_PROPERTY_N(y1, double);
+	NCB_METHOD_DETAIL(reset, Class, void, Class::reset, (double,double,double,double));
 //	NCB_METHOD(equals);
 };
 

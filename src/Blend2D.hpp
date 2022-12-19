@@ -11,6 +11,14 @@ struct Blend2D {
    */
   static void addFont(const tjs_char *file);
 
+  /**
+   * @brief フェイスオブジェクトにフォントを読み込み
+   * 
+   * @param family ファミリー名
+   * @param fontFace 格納先
+   * @return true  成功
+   * @return false 失敗
+   */
   static bool loadFace(const char *family, BLFontFace &fontFace);
 
   static bool loadFaceFile(const tjs_char *file, BLFontFace &fontFace);
@@ -20,7 +28,9 @@ struct Blend2D {
    * 
    * @param family ファミリー名
    * @param size フォントサイズ
-   * @return BLFont* 
+   * @param font 格納先
+   * @return true  成功
+   * @return false 失敗
    */
   static bool loadFont(const char *family, float size, BLFont &font);
 

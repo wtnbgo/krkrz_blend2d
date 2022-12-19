@@ -172,12 +172,10 @@ nk_render(BLContext *ctx, const struct nk_command *cmd)
     } break;
     case NK_COMMAND_IMAGE: {
         const struct nk_command_image *i = (const struct nk_command_image *)cmd;
-/*
-        auto image = (NkImage*)i->img.handle.ptr;
-        if (image->mImage) {
-            ctx->drawImageRect(image->mImage, SkRect::MakeXYWH(i->x, i->y, i->w, i->h), SkSamplingOptions(SkFilterMode::kNearest, SkMipmapMode::kNearest));
+        auto image = (BLImage*)i->img.handle.ptr;
+        if (image) {
+            ctx->blitImage(BLRect(i->x, i->y, i->w, i->h), *image);
         };
-*/
     } break;
     case NK_COMMAND_CUSTOM:
     default: break;
