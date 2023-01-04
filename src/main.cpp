@@ -115,6 +115,26 @@ bool IsArray(const tTJSVariant &var)
 		static type ProxyGet(Class *inst) { type var; inst->methodname(&var); return var; } }; \
 	Property(TJS_W(# name), &AutoProp_ ## name::ProxyGet, (int)0, Proxy)
 
+// オブジェクトなメンバーの直接参照
+#define NCB_MEMBER_PROPERTY_OBJ(name, type) \
+	struct AutoProp_ ## name { \
+		static void ProxySet(Class *inst, tTJSVariant src) { \
+			ncbTypeConvertor::SelectConvertorType<tTJSVariant, type>::Type conv; \
+			conv(inst->name, src); \
+		} \
+		static tTJSVariant ProxyGet(Class *inst) { \
+			iTJSDispatch2 *obj = ncbInstanceAdaptor<type>::CreateAdaptor(&inst->name, true); \
+			return tTJSVariant(obj, obj); \
+		} \
+	}; \
+	NCB_PROPERTY_PROXY(name,AutoProp_ ## name::ProxyGet, AutoProp_ ## name::ProxySet)
+
+#define METHOD(Name) Method(TJS_W(#Name), &Class::Name)
+#define METHOD_NAME(Name, Func) Method(TJS_W(#Name), &Class::Func)
+#define METHOD_ARGS(Name, Args) Method(TJS_W(#Name), static_cast<BLResult (Class::*) Args  noexcept>(&Class::Name))
+#define METHOD_ARGS_NAME(Name, Func, Args) Method(TJS_W(#Name), static_cast<BLResult (Class::*) Args noexcept>(&Class::Func))
+#define METHOD_PROXY(Name, Func)  Method(TJS_W(#Name), &Func, Proxy)
+
 // ------------------------------------------------------
 // 型コンバータ登録
 // ------------------------------------------------------
@@ -328,6 +348,40 @@ NCB_REGISTER_CLASS_DELAY(BLBox, BLBox) {
 //	NCB_METHOD(equals);
 };
 
+// ------------------------------------------------------- BLFontMetrics
+
+NCB_REGISTER_CLASS_DELAY(BLFontMetrics, BLFontMetrics) {
+	NCB_CONSTRUCTOR(());
+	NCB_MEMBER_PROPERTY_N(size, float);
+	NCB_MEMBER_PROPERTY_N(ascent, float);
+	NCB_MEMBER_PROPERTY_N(vAscent, float);
+	NCB_MEMBER_PROPERTY_N(descent, float);
+	NCB_MEMBER_PROPERTY_N(vDescent, float);
+
+	NCB_MEMBER_PROPERTY_N(lineGap, float);
+	NCB_MEMBER_PROPERTY_N(xHeight, float);
+	NCB_MEMBER_PROPERTY_N(capHeight, float);
+	NCB_MEMBER_PROPERTY_N(xMin, float);
+	NCB_MEMBER_PROPERTY_N(yMin, float);
+	NCB_MEMBER_PROPERTY_N(xMax, float);
+	NCB_MEMBER_PROPERTY_N(yMax, float);
+	NCB_MEMBER_PROPERTY_N(underlinePosition, float);
+	NCB_MEMBER_PROPERTY_N(underlineThickness, float);
+	NCB_MEMBER_PROPERTY_N(strikethroughPosition, float);
+	NCB_MEMBER_PROPERTY_N(strikethroughThickness, float);
+	NCB_METHOD(reset);
+};
+
+// ------------------------------------------------------- BLTextMetrics
+
+NCB_REGISTER_CLASS_DELAY(BLTextMetrics, BLTextMetrics) {
+	NCB_CONSTRUCTOR(());
+	NCB_MEMBER_PROPERTY_OBJ(advance, BLPoint);
+	NCB_MEMBER_PROPERTY_OBJ(leadingBearing, BLPoint);
+	NCB_MEMBER_PROPERTY_OBJ(trailingBearing, BLPoint);
+	NCB_MEMBER_PROPERTY_OBJ(boundingBox, BLBox);
+	NCB_METHOD(reset);
+};
 
 // ------------------------------------------------------- BLMatrix2D
 template <class T>
@@ -403,6 +457,11 @@ NCB_REGISTER_CLASS(Blend2D)
 	NCB_METHOD(addFont);
 }
 
+NCB_REGISTER_CLASS(BLFontFaceInfo)
+{
+	NCB_CONSTRUCTOR(());
+}
+
 bool face_load(BLFontFace *face, const char *family) 
 {
 	return Blend2D::loadFace(family, *face);
@@ -416,8 +475,88 @@ bool face_loadfile(BLFontFace *face, const tjs_char *file)
 NCB_REGISTER_CLASS(BLFontFace)
 {
 	NCB_CONSTRUCTOR(());
-	NCB_METHOD_PROXY(load, face_load);
-	NCB_METHOD_PROXY(loadFile, face_loadfile);
+
+	METHOD_PROXY(load, face_load);
+	METHOD_PROXY(loadFile, face_loadfile);
+
+	METHOD(reset);
+	METHOD_ARGS(assign, (const BLFontFace&));
+	METHOD(isValid);
+	METHOD(empty);
+	METHOD(equals);
+
+	METHOD(weight);
+	METHOD(stretch);
+	METHOD(style);
+	METHOD(faceInfo);
+	METHOD(faceType);
+	METHOD(outlineType);
+	METHOD(glyphCount);
+
+	METHOD(faceIndex);
+	METHOD(faceFlags);
+
+	METHOD(hasFaceFlag);
+	METHOD(hasTypographicNames);
+	METHOD(hasTypographicMetrics);
+	METHOD(hasCharToGlyphMapping);
+	METHOD(hasHorizontalMetrics);
+	METHOD(hasVerticalMetrics);
+	METHOD(hasHorizontalKerning);
+	METHOD(hasVerticalKerning);
+	METHOD(hasOpenTypeFeatures);
+	METHOD(hasPanoseData);
+	METHOD(hasUnicodeCoverage);
+	METHOD(hasBaselineYAt0);
+	METHOD(hasLSBPointXAt0);
+	METHOD(hasVariationSequences);
+	METHOD(hasOpenTypeVariations);
+	METHOD(isSymbolFont);
+	METHOD(isLastResortFont);
+	METHOD(diagFlags);
+	METHOD(uniqueId);
+	METHOD(fullName);
+	METHOD(familyName);
+	METHOD(subfamilyName);
+	METHOD(postScriptName);
+	METHOD(unitsPerEm);
+}
+
+NCB_REGISTER_CLASS(BLGlyphMappingState)
+{
+	NCB_CONSTRUCTOR(());
+}
+
+NCB_REGISTER_CLASS(BLGlyphRun)
+{
+	NCB_CONSTRUCTOR(());
+}
+
+BLResult setText(BLGlyphBuffer *gb, const char *text)
+{
+  return gb->setUtf8Text(text);
+}
+
+NCB_REGISTER_CLASS(BLGlyphBuffer)
+{
+	NCB_CONSTRUCTOR(());
+	METHOD_PROXY(setText, setText);
+	METHOD(glyphRun);
+}
+
+NCB_REGISTER_CLASS(BLBitSet)
+{
+	NCB_CONSTRUCTOR(());
+}
+
+NCB_REGISTER_CLASS(BLFontMatrix)
+{
+	NCB_CONSTRUCTOR(());
+}
+
+NCB_REGISTER_CLASS(BLFontDesignMetrics)
+{
+	NCB_CONSTRUCTOR(());
 }
 
 bool font_load(BLFont *font, const char *family, float size) 
@@ -449,13 +588,51 @@ float nk_font_size(BLFont *font)
 NCB_REGISTER_CLASS(BLFont)
 {
 	NCB_CONSTRUCTOR(());
-	NCB_METHOD_PROXY(load, font_load);
-	NCB_METHOD_PROXY(loadFace, font_loadFace);
+	METHOD_PROXY(load, font_load);
+	METHOD_PROXY(loadFace, font_loadFace);
+
+//	METHOD(reset);
+	METHOD(swap);
+	METHOD_ARGS(assign, (const BLFont &));
+	METHOD(isValid);
+	METHOD(empty);
+	METHOD(equals);
+	METHOD(faceType);
+	METHOD(faceFlags);
+	METHOD(size);
+	METHOD(unitsPerEm);
+	METHOD(face);
+	METHOD(weight);
+	METHOD(stretch);
+	METHOD(style);
+	METHOD(matrix);
+	METHOD(metrics);
+	METHOD(designMetrics);
+
+	// メソッドの引数の型補正のために強制キャスト
+	// BLGlyphBufferCore → BLGlyphBuffer
+	Method(TJS_W("shape"), (BLResult (Class::*)(const BLGlyphBuffer&) const)(BLResult (Class::*)(const BLGlyphBufferCore&) const)&Class::shape);
+	Method(TJS_W("mapTextToGlyphs"), (BLResult (Class::*)(BLGlyphBuffer&) noexcept)(BLResult (Class::*)(BLGlyphBufferCore&) const noexcept)&Class::mapTextToGlyphs);
+	Method(TJS_W("positionGlyphs"), (BLResult (Class::*)(BLGlyphBuffer&, uint32_t) const noexcept)(BLResult (Class::*)(BLGlyphBufferCore&, uint32_t) const noexcept)&Class::positionGlyphs);
+	Method(TJS_W("applyKerning"), (BLResult (Class::*)(BLGlyphBuffer&) const noexcept)(BLResult (Class::*)(BLGlyphBuffer&) const noexcept)&Class::applyKerning);
+	Method(TJS_W("applyGSub"), (BLResult (Class::*)(BLGlyphBuffer&, BLBitSet&) const noexcept)(BLResult (Class::*)(BLGlyphBufferCore&, BLBitSetCore&) const noexcept)&Class::applyGSub);
+	Method(TJS_W("applyGPos"), (BLResult (Class::*)(BLGlyphBuffer&, BLBitSet&) const noexcept)(BLResult (Class::*)(BLGlyphBufferCore&, BLBitSetCore&) const noexcept)&Class::applyGPos);
+	Method(TJS_W("getTextMetrics"), (BLResult (Class::*)(BLGlyphBuffer&, BLTextMetrics&) const noexcept)(BLResult (Class::*)(BLGlyphBufferCore&, BLTextMetrics&) const noexcept)&Class::getTextMetrics);
 
 	// nuklear 用プロパティ
 	Property(TJS_W("nk_userdata"), &nk_font_userdata, (int)0, Proxy);
 	Property(TJS_W("nk_font_height"), &nk_font_size, (int)0, Proxy);
 	Property(TJS_W("nk_font_width_func"), &nk_font_width_func, (int)0, Proxy);
+}
+
+NCB_REGISTER_CLASS(BLStrokeOptions)
+{
+	NCB_CONSTRUCTOR(());
+}
+
+NCB_REGISTER_CLASS(BLPath)
+{
+	NCB_CONSTRUCTOR(());
 }
 
 tjs_uintptr_t nk_image_userdata(BLImage *image) {
@@ -468,8 +645,8 @@ NCB_REGISTER_CLASS(BLImage)
 
 	// nuklear 用プロパティ
 	Property(TJS_W("nk_userdata"), &nk_image_userdata, (int)0, Proxy);
-//	Property(TJS_W("nk_image_width"), &BLImage::width, (int)0);
-//	Property(TJS_W("nk_image_height"), &BLImage::height, (int)0);
+	METHOD_NAME(nk_image_width, width);
+	METHOD_NAME(nk_image_height, height);
 }
 
 tjs_uintptr_t nk_context_userdata(BLContext *ctx) {
@@ -483,9 +660,188 @@ tjs_uintptr_t nk_render_func(BLContext *ctx)
     return (tjs_uintptr_t)(void*)&nk_render;
 };
 
+
+BLResult fillText(BLContext *ctx, double x, double y, const BLFont &font, const char *text)
+{
+  return ctx->fillUtf8Text(BLPoint(x, y), font, text);
+}
+
+BLResult fillGlyphBuffer(BLContext *ctx, double x, double y, const BLFont &font, const BLGlyphBuffer &gb)
+{
+  return ctx->fillGlyphRun(BLPoint(x, y), font, gb.glyphRun());
+}
+
+BLResult fillGlyphRun(BLContext *ctx, double x, double y, const BLFont &font, const BLGlyphRun &glyphRun)
+{
+  return ctx->fillGlyphRun(BLPoint(x, y), font, glyphRun);
+}
+
+BLResult strokeText(BLContext *ctx, double x, double y, const BLFont &font, const char *text)
+{
+  return ctx->strokeUtf8Text(BLPoint(x, y), font, text);
+}
+
+BLResult strokeGlyphBuffer(BLContext *ctx, double x, double y, const BLFont &font, const BLGlyphBuffer &gb)
+{
+  return ctx->strokeGlyphRun(BLPoint(x, y), font, gb.glyphRun());
+}
+
+BLResult strokeGlyphRun(BLContext *ctx, double x, double y, const BLFont &font, const BLGlyphRun &glyphRun)
+{
+  return ctx->strokeGlyphRun(BLPoint(x, y), font, glyphRun);
+}
+
+BLResult blitImage(BLContext *ctx, double x, double y, double w, double h, const BLImage &image, int sx, int sy, int sw, int sh)
+{
+  BLRect dst(x,y,w,h);
+  BLRectI srcArea(sw,sy,sw,sh);
+  return ctx->blitImage(dst, image, srcArea);
+}
+
+
 NCB_REGISTER_CLASS(BLContext)
 {
 	NCB_CONSTRUCTOR(());
+
+	METHOD(targetSize);
+	METHOD(targetWidth);
+	METHOD(targetHeight);
+	//METHOD(targetImage);
+
+	METHOD(contextType);
+	METHOD(isValid);
+	METHOD(reset);
+	METHOD_ARGS(assign, (const BLContext&));
+
+	//METHOD(begin);
+	//METHOD(end);
+
+	METHOD(flush);
+
+	METHOD_ARGS(save, ());
+	METHOD_ARGS(restore, ());
+
+	METHOD(metaMatrix);
+	METHOD(userMatrix);
+
+	METHOD(setMatrix);
+	METHOD(resetMatrix);
+
+	METHOD_ARGS(translate, (double, double));
+	METHOD_ARGS(scale, (double, double));
+	METHOD_ARGS(skew, (double, double));
+	METHOD_ARGS(rotate, (double));
+	METHOD_ARGS_NAME(rotateCenter, rotate, (double, double, double));
+	METHOD(transform);
+	METHOD_ARGS(postTranslate, (double, double));
+	METHOD_ARGS(postScale, (double, double));
+	METHOD_ARGS(postSkew, (double, double));
+	METHOD_ARGS(postRotate, (double));
+	METHOD_ARGS_NAME(postRotateCenter, postRotate, (double, double, double));
+	METHOD(postTransform);
+
+	METHOD(userToMeta);
+
+	// Hints
+
+	METHOD(setRenderingQuality);
+	METHOD(setGradientQuality);
+	METHOD(setPatternQuality);
+
+	METHOD(flattenMode);
+	METHOD(setFlattenMode);
+
+	METHOD(flattenTolerance);
+	METHOD(setFlattenTolerance);
+
+	METHOD(compOp);
+	METHOD(setCompOp);
+
+	METHOD(globalAlpha);
+	METHOD(setGlobalAlpha);
+
+	METHOD(styleType);
+	//METHOD_ARGS(setStyle, (uint32_t, const BLStyleCore&));
+
+	METHOD(styleAlpha);
+	METHOD(setStyleAlpha);
+
+	METHOD_ARGS(setFillStyle, (const BLRgba32&));
+	METHOD(getFillStyle);
+	METHOD(fillAlpha);
+	METHOD(setFillAlpha);
+	METHOD(fillRule);
+	METHOD(setFillRule);
+
+	METHOD_ARGS(setStrokeStyle, (const BLRgba32&));
+
+	METHOD(strokeWidth);
+	METHOD(strokeMiterLimit);
+	METHOD(strokeJoin);
+	METHOD(strokeStartCap);
+	METHOD(strokeEndCap);
+	METHOD(strokeDashOffset);
+	//METHOD(strokeDashArray)
+	METHOD(strokeTransformOrder);
+	METHOD(strokeOptions);
+
+	METHOD(setStrokeWidth);
+	METHOD(setStrokeMiterLimit);
+	METHOD(setStrokeJoin);
+	METHOD(setStrokeStartCap);
+	METHOD(setStrokeEndCap);
+	METHOD(setStrokeCaps);
+	METHOD(setStrokeDashOffset);
+	METHOD(setStrokeTransformOrder);
+	METHOD(setStrokeOptions);
+
+	METHOD(strokeAlpha);
+	METHOD(setStrokeAlpha);
+
+	METHOD(restoreClipping);
+	METHOD_ARGS(clipToRect, (double, double, double, double));
+
+	METHOD(clearAll);
+	METHOD_ARGS(clearRect, (double, double, double, double));
+
+	//METHOD(fillGeometry);
+	METHOD(fillAll);
+	METHOD_ARGS(fillBox, (double, double, double, double));
+	METHOD_ARGS(fillRect, (double, double, double, double));
+	METHOD_ARGS(fillCircle, (double, double, double));
+	METHOD_ARGS(fillEllipse, (double, double, double, double));
+	METHOD_ARGS(fillRoundRect, (double, double, double, double, double));
+	METHOD_ARGS(fillChord, (double, double, double, double, double, double));
+	METHOD_ARGS(fillPie, (double, double, double, double, double));
+	METHOD_ARGS(fillTriangle, (double, double, double, double, double, double));
+	//METHOD_ARGS(fillPolygon, )
+	//METHOD_ARGS(fillBoxArray, )
+	//METHOD_ARGS(fillRectArray, )
+	//METHOD(fillRegion);
+	METHOD(fillPath);
+	METHOD_PROXY(fillText, fillText);
+	METHOD_PROXY(fillGlyphBuffer, fillGlyphBuffer);
+	METHOD_PROXY(fillGlyphRun, fillGlyphRun);
+
+	//METHOD(strokeGeometry);
+	METHOD_ARGS(strokeBox, (double, double, double, double));
+	METHOD_ARGS(strokeRect, (double, double, double, double));
+	METHOD_ARGS(strokeCircle, (double, double, double));
+	METHOD_ARGS(strokeEllipse, (double, double, double, double));
+	METHOD_ARGS(strokeRoundRect, (double, double, double, double, double));
+	METHOD_ARGS(strokeChord, (double, double, double, double, double, double));
+	METHOD_ARGS(strokePie, (double, double, double, double, double));
+	METHOD_ARGS(strokeTriangle, (double, double, double, double, double, double));
+	//METHOD_ARGS(strokePolygon, )
+	//METHOD_ARGS(strokeBoxArray, )
+	//METHOD_ARGS(strokeRectArray, )
+	//METHOD(strokeRegion);
+	METHOD(strokePath);
+	METHOD_PROXY(strokeText, strokeText);
+	METHOD_PROXY(strokeGlyphBuffer, strokeGlyphBuffer);
+	METHOD_PROXY(strokeGlyphRun, strokeGlyphRun);
+
+	METHOD_PROXY(blitImage, blitImage);
 
 	// nuklear 用プロパティ
 	Property(TJS_W("nk_userdata"), &nk_context_userdata, (int)0, Proxy);
